@@ -31,7 +31,6 @@ async def runscreenshot(playwright: Playwright, url, screenshotpath):
     await browser.close()
 
 async def user_videos():
-
     with open('subscriptions.csv') as f:
         cf = csv.DictReader(f, fieldnames=['username'])
         for row in cf:
@@ -51,9 +50,10 @@ async def user_videos():
 
             # Set the last modification time for the feed to be the most recent post, else now.
             updated=None
-            
+            proxy_url = os.environ.get("PROXY_URL")
+            proxy_config = {"server": proxy_url} if proxy_url else None
             async with TikTokApi() as api:
-                await api.create_sessions(ms_tokens=[ms_token], num_sessions=1, sleep_after=3, headless=True, browser='webkit')
+                await api.create_sessions(ms_tokens=[ms_token], num_sessions=1, sleep_after=3, headless=True, browser='webkit', context_options={"proxy": proxy_config} if proxy_config else {})
                 ttuser = api.user(user)
                 try:
                     user_data = await ttuser.info()
