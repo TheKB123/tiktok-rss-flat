@@ -7,31 +7,31 @@ on:
   schedule:
     - cron: '10 */4 * * *'
 jobs:
-  scheduled:
+  build:
     runs-on: ubuntu-latest
     steps:
-      - name: checkout repo content
-        uses: actions/checkout@v3 # checkout the repository content to github runner.
-      - name: setup python
+      - uses: actions/checkout@v3
+      
+      - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: 3.12 #install the python needed
-      - name: execute py script
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          playwright install webkit
+          playwright install-deps webkit
+
+      - name: Run TikTok RSS Generator
+        run: python postprocessing.py
         env:
           MS_TOKEN: ${{ secrets.MS_TOKEN }}
+
+      - name: Commit and push changes
         run: |
-          export DISPLAY=:99
-          sudo Xvfb -ac :99 -screen 0 1280x1024x24 > /dev/null 2>&1 &
-          python3.12 -m venv venv
-          source venv/bin/activate
-          echo "VIRTUAL ENV:" $VIRTUAL_ENV
-          pip install playwright==1.40.0
-          pip install -r requirements.txt
-          python -m playwright install
-          # playwright install-deps
-          python postprocessing.py
-          git config user.name github-actions
-          git config user.email github-actions@github.com
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
           git add .
-          git commit --allow-empty -m "Latest TikTok RSS"
-          git push
+          git commit -m "Latest TikTok RSS" || echo "No changes to commit"
+          git push   
